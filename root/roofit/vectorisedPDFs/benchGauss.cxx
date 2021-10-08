@@ -60,11 +60,13 @@ enum RunConfig_t {runBatchUnnorm = 0, runSingleUnnorm = 1,
   runBatchNorm, runSingleNorm,
   runBatchNormLogs, runSingleNormLogs,
   runBatchUnnormDataInXAndSigma, runSingleUnnormDataInXAndSigma,
-  runBatchNormDataInXAndSigma, runSingleNormDataInXAndSigma};
+  runBatchNormDataInXAndSigma, runSingleNormDataInXAndSigma,
+  fitScalar, fitBatch 
+  };
 
 static void benchGauss(benchmark::State& state) {
   RunConfig_t runConfig = static_cast<RunConfig_t>(state.range(0));
-  constexpr std::size_t nParamSets = 30;
+  std::size_t nParamSets = 30;
   constexpr std::size_t nEvents = 500000;
 
   RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
@@ -81,7 +83,7 @@ static void benchGauss(benchmark::State& state) {
 
   RooAbsPdf& pdf = gauss;
   RooDataSet* data;
-  if (runConfig < runBatchUnnormDataInXAndSigma) {
+  if (runConfig < runBatchUnnormDataInXAndSigma || runConfig > runSingleNormDataInXAndSigma) {
     data = pdf.generate(RooArgSet(x), nEvents);
   } else {
     data = pdf.generate(RooArgSet(x, sigma), nEvents);
@@ -92,6 +94,11 @@ static void benchGauss(benchmark::State& state) {
   if (runConfig % 2 == 0)
     data->attachBuffers(observables);
 
+  if (runConfig <= runSingleNormDataInXAndSigma)
+     runConfig = static_cast<RunConfig_t>(runConfig % 6);
+   else
+      nParamSets = 1;
+
   RooBatchCompute::RunContext evalData;
   std::vector<double> results(nEvents);
 
@@ -101,7 +108,7 @@ static void benchGauss(benchmark::State& state) {
       randomiseParameters(parameters, 1337+paramSetIndex);
       state.ResumeTiming();
 
-      runConfig = static_cast<RunConfig_t>(runConfig % 6);
+      
       evalData.clear();
       data->getBatches(evalData, 0, data->numEntries());
 
@@ -132,6 +139,12 @@ static void benchGauss(benchmark::State& state) {
           observables = *data->get(i);
           results[i] = pdf.getLogVal(&observables);
         }
+   
+      } else if (runConfig == fitScalar) {
+         auto r = pdf.fitTo(*data, RooFit::Save(1), RooFit::Minimizer("Minuit2"), RooFit::PrintLevel(-1));
+      } else if (runConfig == fitBatch) {
+         auto r = pdf.fitTo(*data, RooFit::BatchMode(1), RooFit::Save(1), RooFit::Minimizer("Minuit2"),
+                            RooFit::PrintLevel(-1));
       }
     }
   }
@@ -143,20 +156,19 @@ static void benchGauss(benchmark::State& state) {
 //  std::cout << std::endl;
 };
 
-BENCHMARK(benchGauss)->Unit(benchmark::kMillisecond)
-    ->Args({runBatchUnnorm})
-    ->Args({runSingleUnnorm})
-    ->Args({runBatchNorm})
-    ->Args({runSingleNorm})
-    ->Args({runBatchNormLogs})
-    ->Args({runSingleNormLogs})
-    ->Args({runBatchUnnormDataInXAndSigma})
-    ->Args({runSingleUnnormDataInXAndSigma})
-    ->Args({runBatchNormDataInXAndSigma})
-    ->Args({runSingleNormDataInXAndSigma})
-    ;
-
+BENCHMARK(benchGauss)
+   ->Unit(benchmark::kMillisecond)
+   ->Args({runBatchUnnorm})
+   ->Args({runSingleUnnorm})
+   ->Args({runBatchNorm})
+   ->Args({runSingleNorm})
+   ->Args({runBatchNormLogs})
+   ->Args({runSingleNormLogs})
+   ->Args({runBatchUnnormDataInXAndSigma})
+   ->Args({runSingleUnnormDataInXAndSigma})
+   ->Args({runBatchNormDataInXAndSigma})
+   ->Args({runSingleNormDataInXAndSigma})
+   ->Args({fitScalar})
+   ->Args({fitBatch});
 
 BENCHMARK_MAIN();
-
-
