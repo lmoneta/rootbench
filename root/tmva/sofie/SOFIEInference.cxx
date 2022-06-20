@@ -27,6 +27,12 @@
 #include "higgs_model_dense.hxx"
 #include "DDB_B1.hxx"   // CMS onnx model
 
+#include "DenseLayer100_B1.hxx"
+#include "DenseLayer1000_B1.hxx"
+#include "DenseLayer10000_B1.hxx"
+#include "DenseLayer50000_B1.hxx"
+
+
 #include "resnet18v1.hxx"
 #include "TMath.h"
 
@@ -124,8 +130,14 @@ void BM_SOFIE_Inference_3(benchmark::State &state)
 }
 
 // CMS benchmark (3 inputs)
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference_3, TMVA_SOFIE_DDB_B1::Session)->Name("DDB_B1")->Args({1, 1*27, 60*8, 5*2})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference_3, TMVA_SOFIE_DDB_B1::Session)->Name("DDB_B1")->Args({1, 1*27, 60*8, 5*2})->Unit(benchmark::kMillisecond);
 
+// single layer BM
+
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer100_B1::Session)->Name("DenseLayer100_B1")->Args({100, 1})->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer1000_B1::Session)->Name("DenseLayer1000_B1")->Args({100, 1})->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer10000_B1::Session)->Name("DenseLayer10000_B1")->Args({100, 1})->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer50000_B1::Session)->Name("DenseLayer50000_B1")->Args({100, 1})->Unit(benchmark::kMillisecond);
 //Gemm benchmarks
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_16::Session)->Name("Linear_16")->Args({100, 16})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_32::Session)->Name("Linear_32")->Args({100, 32})->Unit(benchmark::kMillisecond);
