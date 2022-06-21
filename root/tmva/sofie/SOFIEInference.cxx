@@ -31,7 +31,11 @@
 #include "DenseLayer1000_B1.hxx"
 #include "DenseLayer10000_B1.hxx"
 #include "DenseLayer50000_B1.hxx"
-
+#include "DenseLayer100_B64.hxx"
+#include "DenseLayer1000_B64.hxx"
+#include "DenseLayer10000_B64.hxx"
+#include "DenseLayer50000_B64.hxx"
+//#include "DenseLayer50000_B64_vdt.hxx"
 
 #include "resnet18v1.hxx"
 #include "TMath.h"
@@ -138,6 +142,12 @@ BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer100_B1::Session)->Na
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer1000_B1::Session)->Name("DenseLayer1000_B1")->Args({100, 1})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer10000_B1::Session)->Name("DenseLayer10000_B1")->Args({100, 1})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer50000_B1::Session)->Name("DenseLayer50000_B1")->Args({100, 1})->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer100_B64::Session)->Name("DenseLayer100_B64")->Args({100, 64})->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer1000_B64::Session)->Name("DenseLayer1000_B64")->Args({100, 64})->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer10000_B64::Session)->Name("DenseLayer10000_B64")->Args({100, 64})->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer50000_B64::Session)->Name("DenseLayer50000_B64")->Args({100, 64})->Unit(benchmark::kMillisecond);
+
 //Gemm benchmarks
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_16::Session)->Name("Linear_16")->Args({100, 16})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_32::Session)->Name("Linear_32")->Args({100, 32})->Unit(benchmark::kMillisecond);
