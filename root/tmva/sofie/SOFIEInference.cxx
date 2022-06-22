@@ -41,6 +41,8 @@
 #include "Sigmoid100_B64.hxx"
 #include "Sigmoid10000_B1.hxx"
 #include "Sigmoid10000_B64.hxx"
+#include "SigmoidL100_100_B1.hxx"
+#include "SigmoidL100_100_B64.hxx"
 
 #include "resnet18v1.hxx"
 #include "TMath.h"
@@ -147,7 +149,8 @@ BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Sigmoid100_B1::Session)->Name(
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Sigmoid10000_B1::Session)->Name("Sigmoid10000_B1")->Args({10000, 1})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Sigmoid100_B64::Session)->Name("Sigmoid100_B64")->Args({100, 64})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Sigmoid10000_B64::Session)->Name("Sigmoid10000_B64")->Args({10000, 64})->Unit(benchmark::kMillisecond);
-
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_SigmoidL100_100_B1::Session)->Name("SigmoidL100_100_B1")->Args({100, 1})->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_SigmoidL100_100_B64::Session)->Name("SigmoidL100_100_B64")->Args({100, 64})->Unit(benchmark::kMillisecond);
 // single layer BM
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer100_B1::Session)->Name("DenseLayer100_B1")->Args({100, 1})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_DenseLayer1000_B1::Session)->Name("DenseLayer1000_B1")->Args({100, 1})->Unit(benchmark::kMillisecond);
