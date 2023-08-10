@@ -156,7 +156,7 @@ void BM_SOFIE_Inference_3(benchmark::State &state)
          float * p1 = input1.data()+ inputSize1*i;
          float * p2 = input2.data()+ inputSize2*i;
          float * p3 = input3.data()+ inputSize3*i;
-         auto y = s.infer(std::vector<float>(p1, p1 + inputSize), std::vector<float>(p2, p2 + inputSize), std::vector<float>(p3, p3 + inputSize));
+         auto y = s.infer(std::vector<float>(p1, p1 + inputSize1), std::vector<float>(p2, p2 + inputSize2), std::vector<float>(p3, p3 + inputSize3));
       }
       auto t2 = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
@@ -170,12 +170,12 @@ void BM_SOFIE_Inference_3(benchmark::State &state)
 // CMS benchmark (3 inputs)
 //BENCHMARK_TEMPLATE(BM_SOFIE_Inference_3, TMVA_SOFIE_DDB_B1::Session)->Name("DDB_B1")->Args({1, 1*27, 60*8, 5*2})->Unit(benchmark::kMillisecond);
 // Conv Transpose
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv2DTranspose_Relu_Sigmoid::Session)->Name("Conv2DTranspose_Relu_Sigmoid")->Args({15,1})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_ConvTModel_G4::Session)->Name("ConvTModel_G4")->Args({15,1})->Unit(benchmark::kMillisecond);
+// BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv2DTranspose_Relu_Sigmoid::Session)->Name("Conv2DTranspose_Relu_Sigmoid")->Args({15,1})->Unit(benchmark::kMillisecond);
+// BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_ConvTModel_G4::Session)->Name("ConvTModel_G4")->Args({15,1})->Unit(benchmark::kMillisecond);
 //BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_ConvTransposeM::Session)->Name("ConvTransposeM")->Args({4*30*30,4})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_ConvTrans2dModel_B1::Session)->Name("ConvTrans2dModel_B1")->Args({4*4*4,1})->Unit(benchmark::kMillisecond);
+// BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_ConvTrans2dModel_B1::Session)->Name("ConvTrans2dModel_B1")->Args({4*4*4,1})->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_SimpleNN_Alice::Session)->Name("SimpleNN_Alice")->Args({16,1})->Unit(benchmark::kMillisecond);
+// BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_SimpleNN_Alice::Session)->Name("SimpleNN_Alice")->Args({16,1})->Unit(benchmark::kMillisecond);
 
 //Gemm benchmarks
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_16::Session)->Name("Linear_16")->Args({100, 16})->Unit(benchmark::kMillisecond);
@@ -187,18 +187,18 @@ BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Generator_B64::Session)->Name(
 
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_higgs_model_dense::Session)->Name("higgs_model_dense")->Args({7, 1})->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv_d100_L14_B1::Session)->Name( "Conv_d100_L14_B1")->Args({100*100, 1})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv_d100_L14_B32::Session)->Name("Conv_d100_L14_B32")->Args({100*100, 32})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv_d100_L1_B1::Session)->Name( "Conv_d100_L1_B1")->Args({100*100, 1})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv_d100_L14_B1::Session)->Name( "Conv_d100_L14_B1")->Args({100*100, 1})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv_d100_L14_B32::Session)->Name("Conv_d100_L14_B32")->Args({100*100, 32})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv_d100_L1_B1::Session)->Name( "Conv_d100_L1_B1")->Args({100*100, 1})->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv3d_d32_L4_B1::Session)->Name( "Conv3d_d32_L4_B1")->Args({32*32*32, 1})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv3d_d32_L4_B1::Session)->Name( "Conv3d_d32_L4_B1")->Args({32*32*32, 1})->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_resnet18v1::Session)->Name("resnet18v1")->Args({3 * 224 * 224, 1})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_resnet18v1::Session)->Name("resnet18v1")->Args({3 * 224 * 224, 1})->Unit(benchmark::kMillisecond);
 
 //Recurrent benchmark
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_RNN_d10_L20_h8_B1::Session)->Name("RNN_d10_L20_h8_B1")->Args({3 * 5, 1})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_GRU_d10_L20_h8_B1::Session)->Name("GRU_d10_L20_h8_B1")->Args({3 * 5, 1})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_LSTM_d10_L20_h8_B1::Session)->Name("LSTM_d10_L20_h8_B1")->Args({1 * 1, 1})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_RNN_d10_L20_h8_B1::Session)->Name("RNN_d10_L20_h8_B1")->Args({3 * 5, 1})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_GRU_d10_L20_h8_B1::Session)->Name("GRU_d10_L20_h8_B1")->Args({3 * 5, 1})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_LSTM_d10_L20_h8_B1::Session)->Name("LSTM_d10_L20_h8_B1")->Args({1 * 1, 1})->Unit(benchmark::kMillisecond);
 
 
 BENCHMARK_MAIN();
