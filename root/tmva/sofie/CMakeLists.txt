@@ -130,9 +130,16 @@ endif()
 add_executable(emitFromONNX
    EmitFromONNX.cxx
 )
+
+add_executable(emitFromONNX_GPU
+  EmitFromONNX_GPU.cxx
+)
 #target_include_directories(emitFromONNX PRIVATE )
 target_link_libraries(emitFromONNX ${Protobuf_LIBRARIES} Core ROOTTMVASofie ROOTTMVASofieParser)
 set_target_properties(emitFromONNX PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+
+target_link_libraries(emitFromONNX_GPU ${Protobuf_LIBRARIES} Core ROOTTMVASofie ROOTTMVASofieParser)
+set_target_properties(emitFromONNX_GPU PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 if (NOT ONNX_MODELS_DIR)
   set(ONNX_MODELS_DIR input_models)
@@ -141,16 +148,28 @@ endif()
 add_custom_target(SofieCompileModels)
 add_dependencies(SofieCompileModels emitFromONNX)
 
+add_custom_target(SofieCompileGPUModels)
+add_dependencies(SofieCompileGPUModels emitFromONNX_GPU)
 
 file(GLOB ONNX_FILES "${ONNX_MODELS_DIR}/*.onnx")
 foreach(onnx_file ${ONNX_FILES})
 	#get_filename_component(fname ${onnx_file} NAME_WE)
 	#get_filename_component(fdir ${onnx_file} DIRECTORY)
 	add_custom_command(TARGET SofieCompileModels POST_BUILD
-		COMMAND ./emitFromONNX ${onnx_file}
+		COMMAND ./emitFromONNX ${onnx_file} 
 		USES_TERMINAL
 	)
 endforeach()
+
+foreach(onnx_file ${ONNX_FILES})
+	#get_filename_component(fname ${onnx_file} NAME_WE)
+	#get_filename_component(fdir ${onnx_file} DIRECTORY)
+	add_custom_command(TARGET SofieCompileGPUModels POST_BUILD
+		COMMAND ./emitFromONNX_GPU ${onnx_file}
+		USES_TERMINAL
+	)
+endforeach()
+
 
 find_package(BLAS)
 if(BLAS_FOUND)
