@@ -195,6 +195,23 @@ RB_ADD_GBENCHMARK(SOFIEInference
 
 add_dependencies(SOFIEInference SofieCompileModels)
 
+find_package(IntelSYCL REQUIRED)
+find_package(MKL REQUIRED)
+RB_ADD_GBENCHMARK(SOFIEGPUInference
+  SOFIEGPUInference.cxx
+  LABEL short
+  LIBRARIES
+    ROOTTMVASofie
+  INCLUDE_DIRS
+    ${CMAKE_CURRENT_BINARY_DIR}
+  COMPILE_OPTIONS
+    -fsycl -DMKL_ILP64  -I"${MKLROOT}/include"
+  LINK_OPTIONS
+    -fsycl  -L${MKLROOT}/lib/intel64 -lmkl_sycl -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lsycl -lpthread -lm -ldl
+)
+add_sycl_to_target(TARGET SOFIEGPUInference SOURCES SOFIEGPUInference.cxx)
+add_dependencies(SOFIEGPUInference SofieCompileGPUModels)
+
 RB_ADD_GBENCHMARK(RDF_SOFIE_Inference
     RDF_SOFIE_Inference.cxx
     LABEL short

@@ -19,17 +19,15 @@ int main(int argc, char *argv[]){
    }
 
    std::string outname = argv[1];
-   // assuming the file name is input_models/*.onnx
-   outname.erase(outname.end()-5, outname.end());
-   std::cout << outname << std::endl;
+   int last_slash = outname.find_last_of('/');
+   std::string file = outname.substr(last_slash+1);
+   file.erase(file.end()-5, file.end());
    
-   outname.erase(outname.begin(), outname.begin()+13);
-   std::cout << outname << std::endl;
    RModelParser_ONNX parser;
    std::cout << "Parsing file " << argv[1] << std::endl;
    RModel model = parser.Parse(argv[1]);
    model.GenerateGPU();
-   model.OutputGeneratedGPU(outname + "GPU_FromONNX.hxx");
+   model.OutputGeneratedGPU(file + "GPU_FromONNX.hxx");
 
    return 0;
 }
