@@ -167,7 +167,7 @@ void BM_SOFIE_Inference_3(benchmark::State &state)
 }
 
 // CMS benchmark (3 inputs)
-//BENCHMARK_TEMPLATE(BM_SOFIE_Inference_3, TMVA_SOFIE_DDB_B1::Session)->Name("DDB_B1")->Args({1, 1*27, 60*8, 5*2})->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference_3, TMVA_SOFIE_DDB_B1::Session)->Name("DDB_B1")->Args({1, 1*27, 60*8, 5*2})->Unit(benchmark::kMillisecond);
 // Conv Transpose
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv2DTranspose_Relu_Sigmoid::Session)->Name("Conv2DTranspose_Relu_Sigmoid")->Args({15,1})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_ConvTModel_G4::Session)->Name("ConvTModel_G4")->Args({15,1})->Unit(benchmark::kMillisecond);

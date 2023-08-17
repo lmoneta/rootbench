@@ -205,7 +205,7 @@ RB_ADD_GBENCHMARK(SOFIEGPUInference
   INCLUDE_DIRS
     ${CMAKE_CURRENT_BINARY_DIR}
   COMPILE_OPTIONS
-    -fsycl -DMKL_ILP64  -I"${MKLROOT}/include"
+    -fsycl -DMKL_ILP64  -I"${MKLROOT}/include" -O3
   LINK_OPTIONS
     -fsycl  -L${MKLROOT}/lib/intel64 -lmkl_sycl -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lsycl -lpthread -lm -ldl
 )
