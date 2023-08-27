@@ -130,16 +130,20 @@ endif()
 add_executable(emitFromONNX
    EmitFromONNX.cxx
 )
-
-add_executable(emitFromONNX_GPU
-  EmitFromONNX_GPU.cxx
-)
 #target_include_directories(emitFromONNX PRIVATE )
 target_link_libraries(emitFromONNX ${Protobuf_LIBRARIES} Core ROOTTMVASofie ROOTTMVASofieParser)
 set_target_properties(emitFromONNX PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
+if (ROOT_tmva-sycl_FOUND)
+add_executable(emitFromONNX_GPU
+  EmitFromONNX_GPU.cxx
+)
+
 target_link_libraries(emitFromONNX_GPU ${Protobuf_LIBRARIES} Core ROOTTMVASofie ROOTTMVASofieParser)
 set_target_properties(emitFromONNX_GPU PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+
+endif()
+
 
 if (NOT ONNX_MODELS_DIR)
   set(ONNX_MODELS_DIR input_models)
@@ -147,9 +151,6 @@ endif()
 
 add_custom_target(SofieCompileModels)
 add_dependencies(SofieCompileModels emitFromONNX)
-
-add_custom_target(SofieCompileGPUModels)
-add_dependencies(SofieCompileGPUModels emitFromONNX_GPU)
 
 file(GLOB ONNX_FILES "${ONNX_MODELS_DIR}/*.onnx")
 foreach(onnx_file ${ONNX_FILES})
@@ -161,6 +162,10 @@ foreach(onnx_file ${ONNX_FILES})
 	)
 endforeach()
 
+if (ROOT_tmva-sycl_FOUND)
+add_custom_target(SofieCompileGPUModels)
+add_dependencies(SofieCompileGPUModels emitFromONNX_GPU)
+
 foreach(onnx_file ${ONNX_FILES})
 	#get_filename_component(fname ${onnx_file} NAME_WE)
 	#get_filename_component(fdir ${onnx_file} DIRECTORY)
@@ -169,6 +174,10 @@ foreach(onnx_file ${ONNX_FILES})
 		USES_TERMINAL
 	)
 endforeach()
+
+endif()
+
+
 
 
 find_package(BLAS)
@@ -195,6 +204,7 @@ RB_ADD_GBENCHMARK(SOFIEInference
 
 add_dependencies(SOFIEInference SofieCompileModels)
 
+if (ROOT_tmva-sycl_FOUND)
 find_package(IntelSYCL REQUIRED)
 find_package(MKL REQUIRED)
 RB_ADD_GBENCHMARK(SOFIEGPUInference
@@ -211,6 +221,7 @@ RB_ADD_GBENCHMARK(SOFIEGPUInference
 )
 add_sycl_to_target(TARGET SOFIEGPUInference SOURCES SOFIEGPUInference.cxx)
 add_dependencies(SOFIEGPUInference SofieCompileGPUModels)
+endif()
 
 RB_ADD_GBENCHMARK(RDF_SOFIE_Inference
     RDF_SOFIE_Inference.cxx
