@@ -134,7 +134,7 @@ add_executable(emitFromONNX
 target_link_libraries(emitFromONNX ${Protobuf_LIBRARIES} Core ROOTTMVASofie ROOTTMVASofieParser)
 set_target_properties(emitFromONNX PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
-if (ROOT_tmva-sycl_FOUND)
+if (ROOT_sofie-sycl_FOUND)
 add_executable(emitFromONNX_GPU
   EmitFromONNX_GPU.cxx
 )
@@ -162,7 +162,7 @@ foreach(onnx_file ${ONNX_FILES})
 	)
 endforeach()
 
-if (ROOT_tmva-sycl_FOUND)
+if (ROOT_sofie-sycl_FOUND)
 add_custom_target(SofieCompileGPUModels)
 add_dependencies(SofieCompileGPUModels emitFromONNX_GPU)
 
@@ -204,7 +204,7 @@ RB_ADD_GBENCHMARK(SOFIEInference
 
 add_dependencies(SOFIEInference SofieCompileModels)
 
-if (ROOT_tmva-sycl_FOUND)
+if (ROOT_sofie-sycl_FOUND)
 find_package(IntelSYCL REQUIRED)
 find_package(MKL REQUIRED)
 RB_ADD_GBENCHMARK(SOFIEGPUInference
