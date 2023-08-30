@@ -205,22 +205,71 @@ RB_ADD_GBENCHMARK(SOFIEInference
 add_dependencies(SOFIEInference SofieCompileModels)
 
 if (ROOT_sofie-sycl_FOUND)
-find_package(IntelSYCL REQUIRED)
-find_package(MKL REQUIRED)
-RB_ADD_GBENCHMARK(SOFIEGPUInference
-  SOFIEGPUInference.cxx
-  LABEL short
-  LIBRARIES
-    ROOTTMVASofie
-  INCLUDE_DIRS
-    ${CMAKE_CURRENT_BINARY_DIR}
-  COMPILE_OPTIONS
-    -fsycl -DMKL_ILP64  -I"${MKLROOT}/include" -O3
-  LINK_OPTIONS
-    -fsycl  -L${MKLROOT}/lib/intel64 -lmkl_sycl -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lsycl -lpthread -lm -ldl
-)
+  find_package(IntelSYCL REQUIRED)
+  if (ROOT_GPU_BLAS_MKLBLAS_FOUND)
+  find_package(MKL REQUIRED)
+  RB_ADD_GBENCHMARK(SOFIEGPUInference
+    SOFIEGPUInference.cxx
+    LABEL short
+    LIBRARIES
+      ROOTTMVASofie
+    INCLUDE_DIRS
+      ${CMAKE_CURRENT_BINARY_DIR}
+    COMPILE_OPTIONS
+    -fsycl -DMKL_ILP64  -I${MKLROOT}/include -O3
+    LINK_OPTIONS
+      -fsycl  -L${MKLROOT}/lib/intel64 -lmkl_sycl -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lsycl -lpthread -lm -ldl -O3
+    )
+  else()
+    find_package(PORTBLAS REQUIRED)
+    if (ROOT_TARGET_GPU_NVIDIA_FOUND)
+      RB_ADD_GBENCHMARK(SOFIEGPUInference
+      SOFIEGPUInference.cxx
+      LABEL short
+      LIBRARIES
+        ROOTTMVASofie
+      INCLUDE_DIRS
+        ${CMAKE_CURRENT_BINARY_DIR}
+      COMPILE_OPTIONS
+      -fsycl -I${PORTBLAS_INCLUDE_DIR} -I${PORTBLAS_SRC_DIR} -fsycl-targets=nvptx64-nvidia-cuda
+      LINK_OPTIONS
+      -fsycl -fsycl-targets=nvptx64-nvidia-cuda 
+      )
+    elseif(ROOT_TARGET_GPU_AMD_FOUND)
+      RB_ADD_GBENCHMARK(SOFIEGPUInference
+      SOFIEGPUInference.cxx
+      LABEL short
+      LIBRARIES
+        ROOTTMVASofie
+      INCLUDE_DIRS
+        ${CMAKE_CURRENT_BINARY_DIR}
+      COMPILE_OPTIONS
+      -fsycl -I${PORTBLAS_INCLUDE_DIR} -I${PORTBLAS_SRC_DIR} -fsycl-targets=amdgcn-amd-amdhsa
+      LINK_OPTIONS
+      -fsycl -fsycl-targets=amdgcn-amd-amdhsa 
+      )
+    else()
+    RB_ADD_GBENCHMARK(SOFIEGPUInference
+      SOFIEGPUInference.cxx
+      LABEL short
+      LIBRARIES
+        ROOTTMVASofie
+      INCLUDE_DIRS
+        ${CMAKE_CURRENT_BINARY_DIR}
+      COMPILE_OPTIONS
+      -fsycl -I${PORTBLAS_INCLUDE_DIR} -I${PORTBLAS_SRC_DIR}
+      LINK_OPTIONS
+      -fsycl
+      )
+    endif()
+  endif()
+endif()
 add_sycl_to_target(TARGET SOFIEGPUInference SOURCES SOFIEGPUInference.cxx)
 add_dependencies(SOFIEGPUInference SofieCompileGPUModels)
+endif()
+
+if (ROOT_sofie-sycl_FOUND)
+  if (ROOT_GPU_BLAS)
 endif()
 
 RB_ADD_GBENCHMARK(RDF_SOFIE_Inference
