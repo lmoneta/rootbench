@@ -141,6 +141,30 @@ add_executable(emitFromONNX_GPU
 
 target_link_libraries(emitFromONNX_GPU ${Protobuf_LIBRARIES} Core ROOTTMVASofie ROOTTMVASofieParser)
 set_target_properties(emitFromONNX_GPU PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+if (ROOT_sofie-sycl_FOUND)
+  if (ROOT_GPU_BLAS_MKLBLAS_FOUND)
+  target_compile_definitions(emitFromONNX_GPU PUBLIC GPU_BLAS=0)
+  target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=0)
+  target_compile_definitions(emitFromONNX PUBLIC GPU_BLAS=0)
+  target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=0)
+  else()
+    target_compile_definitions(emitFromONNX_GPU PUBLIC GPU_BLAS=1)
+    target_compile_definitions(emitFromONNX PUBLIC GPU_BLAS=1)
+    if (ROOT_TARGET_GPU_NVIDIA_FOUND)
+      target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=1)
+      target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=1)
+
+    elseif(ROOT_TARGET_GPU_AMD_FOUND)
+      target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=2)
+      target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=2)
+
+    else()
+      target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=0)
+      target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=0)
+
+  endif()
+endif()
+endif()
 
 endif()
 
@@ -216,7 +240,7 @@ if (ROOT_sofie-sycl_FOUND)
     INCLUDE_DIRS
       ${CMAKE_CURRENT_BINARY_DIR}
     COMPILE_OPTIONS
-    -fsycl -DMKL_ILP64  -I${MKLROOT}/include -O3
+    -fsycl -DMKL_ILP64  -I${MKLROOT}/include -O3 
     LINK_OPTIONS
       -fsycl  -L${MKLROOT}/lib/intel64 -lmkl_sycl -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lsycl -lpthread -lm -ldl -O3
     )
@@ -231,7 +255,7 @@ if (ROOT_sofie-sycl_FOUND)
       INCLUDE_DIRS
         ${CMAKE_CURRENT_BINARY_DIR}
       COMPILE_OPTIONS
-      -fsycl -I${PORTBLAS_INCLUDE_DIR} -I${PORTBLAS_SRC_DIR} -fsycl-targets=nvptx64-nvidia-cuda
+      -fsycl -I${PORTBLAS_INCLUDE_DIR} -I${PORTBLAS_SRC_DIR} -fsycl-targets=nvptx64-nvidia-cuda 
       LINK_OPTIONS
       -fsycl -fsycl-targets=nvptx64-nvidia-cuda 
       )
@@ -257,9 +281,9 @@ if (ROOT_sofie-sycl_FOUND)
       INCLUDE_DIRS
         ${CMAKE_CURRENT_BINARY_DIR}
       COMPILE_OPTIONS
-      -fsycl -I${PORTBLAS_INCLUDE_DIR} -I${PORTBLAS_SRC_DIR}
+      -fsycl -I${PORTBLAS_INCLUDE_DIR} -I${PORTBLAS_SRC_DIR} -DMKL_ILP64  -I${MKLROOT}/include -O3 
       LINK_OPTIONS
-      -fsycl
+      -fsycl -L${MKLROOT}/lib/intel64 -lmkl_sycl -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lsycl -lpthread -lm -ldl -O3
       )
     endif()
   endif()
