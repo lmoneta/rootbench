@@ -33,7 +33,7 @@ endfunction(RB_ADD_SETUP_FIXTURE)
 # function RB_ADD_GBENCHMARK(<benchmark> source1 source2... LIBRARIES libs)
 #----------------------------------------------------------------------------
 function(RB_ADD_GBENCHMARK benchmark)
-  cmake_parse_arguments(ARG "" "LABEL" "SETUP;DOWNLOAD_DATAFILES;DEPENDS;LIBRARIES" ${ARGN})
+  cmake_parse_arguments(ARG "" "LABEL" "SETUP;DOWNLOAD_DATAFILES;DEPENDS;LIBRARIES;INCLUDE_DIRS;COMPILE_OPTIONS;LINK_OPTIONS" ${ARGN})
   set(source_files ${ARG_UNPARSED_ARGUMENTS})
   add_executable(${benchmark} ${source_files})
   target_include_directories(${benchmark} PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${GBENCHMARK_INCLUDE_DIR})
@@ -60,6 +60,18 @@ function(RB_ADD_GBENCHMARK benchmark)
    # Add dependencies to benchmark
   if(ARG_DEPENDS)
     add_dependencies(${benchmark} ${ARG_DEPENDS})
+  endif()
+
+  if (ARG_INCLUDE_DIRS)
+    target_include_directories(${benchmark} PRIVATE ${ARG_INCLUDE_DIRS})
+  endif()
+
+  if (ARG_COMPILE_OPTIONS)
+    target_compile_options(${benchmark} PRIVATE ${ARG_COMPILE_OPTIONS})
+  endif()
+
+  if (ARG_LINK_OPTIONS)
+    target_link_options(${benchmark} PRIVATE ${ARG_LINK_OPTIONS})
   endif()
 
   if(ARG_DOWNLOAD_DATAFILES)

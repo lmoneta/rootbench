@@ -11,28 +11,28 @@
 #include <functional>
 #include <random>
 
-#include "Linear_event.hxx"
-#include "Linear_16.hxx"
-#include "Linear_32.hxx"
-#include "Linear_64.hxx"
-#include "Generator_B1.hxx"
-#include "Generator_B64.hxx"
-#include "Conv_d100_L1_B1.hxx"
-#include "Conv_d100_L14_B1.hxx"
-#include "Conv_d100_L14_B32.hxx"
-#include "Conv3d_d32_L4_B1.hxx"
-#include "RNN_d10_L20_h8_B1.hxx"
-#include "GRU_d10_L20_h8_B1.hxx"
-#include "LSTM_d10_L20_h8_B1.hxx"
-#include "higgs_model_dense.hxx"
-#include "DDB_B1.hxx"   // CMS onnx model
-#include "Conv2DTranspose_Relu_Sigmoid.hxx"
-#include "ConvTrans2dModel_B1.hxx"
-//#include "ConvTransposeM.hxx"
-#include "ConvTModel_G4.hxx"
-#include "SimpleNN_Alice.hxx"
+#include "Linear_eventGPU_FromONNX.hxx"
+#include "Linear_16GPU_FromONNX.hxx"
+#include "Linear_32GPU_FromONNX.hxx"
+#include "Linear_64GPU_FromONNX.hxx"
+#include "Generator_B1GPU_FromONNX.hxx"
+#include "Generator_B64GPU_FromONNX.hxx"
+#include "Conv_d100_L1_B1GPU_FromONNX.hxx"
+#include "Conv_d100_L14_B1GPU_FromONNX.hxx"
+#include "Conv_d100_L14_B32GPU_FromONNX.hxx"
+#include "Conv3d_d32_L4_B1GPU_FromONNX.hxx"
+#include "RNN_d10_L20_h8_B1GPU_FromONNX.hxx"
+#include "GRU_d10_L20_h8_B1GPU_FromONNX.hxx"
+#include "LSTM_d10_L20_h8_B1GPU_FromONNX.hxx"
+#include "higgs_model_denseGPU_FromONNX.hxx"
+#include "DDB_B1GPU_FromONNX.hxx"   // CMS onnx model
+#include "Conv2DTranspose_Relu_SigmoidGPU_FromONNX.hxx"
+#include "ConvTrans2dModel_B1GPU_FromONNX.hxx"
+//#include "ConvTransposeMGPU_FromONNX.hxx"
+#include "ConvTModel_G4GPU_FromONNX.hxx"
+#include "SimpleNN_AliceGPU_FromONNX.hxx"
 
-#include "resnet18v1.hxx"
+#include "resnet18v1GPU_FromONNX.hxx"
 #include "TMath.h"
 
 
@@ -70,7 +70,8 @@ void BM_SOFIE_Inference(benchmark::State &state)
    for (auto _ : state) {
       auto t1 = std::chrono::high_resolution_clock::now();
       for (int i = 0; i < nevts; i += bsize) {
-         auto y = s.infer(input.data()+ inputSize*i);
+         input_ptr = input.data() + inputSize * i;
+         auto y = s.infer(std::vector<float>(input_ptr, input_ptr + inputSize * bsize));
          if (first) {
             //std::cout << std::string(typeid(s).name()) << " :  " << y[0] << "  " << y[1] << std::endl;
             yOut = y;
@@ -155,7 +156,7 @@ void BM_SOFIE_Inference_3(benchmark::State &state)
          float * p1 = input1.data()+ inputSize1*i;
          float * p2 = input2.data()+ inputSize2*i;
          float * p3 = input3.data()+ inputSize3*i;
-         auto y = s.infer(p1,p2,p3);
+         auto y = s.infer(std::vector<float>(p1, p1 + inputSize1), std::vector<float>(p2, p2 + inputSize2), std::vector<float>(p3, p3 + inputSize3));
       }
       auto t2 = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
@@ -169,7 +170,7 @@ void BM_SOFIE_Inference_3(benchmark::State &state)
 // CMS benchmark (3 inputs)
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference_3, TMVA_SOFIE_DDB_B1::Session)->Name("DDB_B1")->Args({1, 1*27, 60*8, 5*2})->Unit(benchmark::kMillisecond);
 // Conv Transpose
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv2DTranspose_Relu_Sigmoid::Session)->Name("Conv2DTranspose_Relu_Sigmoid")->Args({15,1})->Unit(benchmark::kMillisecond);
+ BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Conv2DTranspose_Relu_Sigmoid::Session)->Name("Conv2DTranspose_Relu_Sigmoid")->Args({15,1})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_ConvTModel_G4::Session)->Name("ConvTModel_G4")->Args({15,1})->Unit(benchmark::kMillisecond);
 //BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_ConvTransposeM::Session)->Name("ConvTransposeM")->Args({4*30*30,4})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_ConvTrans2dModel_B1::Session)->Name("ConvTrans2dModel_B1")->Args({4*4*4,1})->Unit(benchmark::kMillisecond);
@@ -196,8 +197,8 @@ BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_resnet18v1::Session)->Name("re
 
 //Recurrent benchmark
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_RNN_d10_L20_h8_B1::Session)->Name("RNN_d10_L20_h8_B1")->Args({3 * 5, 1})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_GRU_d10_L20_h8_B1::Session)->Name("GRU_d10_L20_h8_B1")->Args({3 * 5, 1})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_LSTM_d10_L20_h8_B1::Session)->Name("LSTM_d10_L20_h8_B1")->Args({1 * 1, 1})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_GRU_d10_L20_h8_B1::Session)->Name("GRU_d10_L20_h8_B1")->Args({3 * 5, 1})->Unit(benchmark::kMillisecond);
+//BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_LSTM_d10_L20_h8_B1::Session)->Name("LSTM_d10_L20_h8_B1")->Args({1 * 1, 1})->Unit(benchmark::kMillisecond);
 
 
 BENCHMARK_MAIN();

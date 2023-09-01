@@ -134,6 +134,47 @@ add_executable(emitFromONNX
 target_link_libraries(emitFromONNX ${Protobuf_LIBRARIES} Core ROOTTMVASofie ROOTTMVASofieParser)
 set_target_properties(emitFromONNX PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
+if (ROOT_sofie-sycl_FOUND)
+add_executable(emitFromONNX_GPU
+  EmitFromONNX_GPU.cxx
+)
+
+target_link_libraries(emitFromONNX_GPU ${Protobuf_LIBRARIES} Core ROOTTMVASofie ROOTTMVASofieParser)
+set_target_properties(emitFromONNX_GPU PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+
+
+if (ROOT_sofie-sycl_FOUND)
+  if (ROOT_GPU_BLAS_MKLBLAS_FOUND)
+  target_compile_definitions(emitFromONNX_GPU PUBLIC GPU_BLAS=0)
+  target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=0)
+  target_compile_definitions(emitFromONNX PUBLIC GPU_BLAS=0)
+  target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=0)
+  else()
+    target_compile_definitions(emitFromONNX_GPU PUBLIC GPU_BLAS=1)
+    target_compile_definitions(emitFromONNX PUBLIC GPU_BLAS=1)
+    if (ROOT_TARGET_GPU_NVIDIA_FOUND)
+      target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=1)
+      target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=1)
+
+    elseif(ROOT_TARGET_GPU_AMD_FOUND)
+      target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=2)
+      target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=2)
+
+    else()
+      target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=0)
+      target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=0)
+    endif()
+  endif()
+else()
+  target_compile_definitions(emitFromONNX PUBLIC GPU_BLAS=0)
+  target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=0)
+  target_compile_definitions(emitFromONNX_GPU PUBLIC GPU_BLAS=0)
+  target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=0)
+endif()
+
+endif()
+
+
 if (NOT ONNX_MODELS_DIR)
   set(ONNX_MODELS_DIR input_models)
 endif()
@@ -141,16 +182,33 @@ endif()
 add_custom_target(SofieCompileModels)
 add_dependencies(SofieCompileModels emitFromONNX)
 
-
 file(GLOB ONNX_FILES "${ONNX_MODELS_DIR}/*.onnx")
 foreach(onnx_file ${ONNX_FILES})
 	#get_filename_component(fname ${onnx_file} NAME_WE)
 	#get_filename_component(fdir ${onnx_file} DIRECTORY)
 	add_custom_command(TARGET SofieCompileModels POST_BUILD
-		COMMAND ./emitFromONNX ${onnx_file}
+		COMMAND ./emitFromONNX ${onnx_file} 
 		USES_TERMINAL
 	)
 endforeach()
+
+if (ROOT_sofie-sycl_FOUND)
+add_custom_target(SofieCompileGPUModels)
+add_dependencies(SofieCompileGPUModels emitFromONNX_GPU)
+
+foreach(onnx_file ${ONNX_FILES})
+	#get_filename_component(fname ${onnx_file} NAME_WE)
+	#get_filename_component(fdir ${onnx_file} DIRECTORY)
+	add_custom_command(TARGET SofieCompileGPUModels POST_BUILD
+		COMMAND ./emitFromONNX_GPU ${onnx_file}
+		USES_TERMINAL
+	)
+endforeach()
+
+endif()
+
+
+
 
 find_package(BLAS)
 if(BLAS_FOUND)
@@ -175,6 +233,74 @@ RB_ADD_GBENCHMARK(SOFIEInference
 )
 
 add_dependencies(SOFIEInference SofieCompileModels)
+
+if (ROOT_sofie-sycl_FOUND)
+  find_package(IntelSYCL REQUIRED)
+  if (ROOT_GPU_BLAS_MKLBLAS_FOUND)
+  find_package(MKL REQUIRED)
+  RB_ADD_GBENCHMARK(SOFIEGPUInference
+    SOFIEGPUInference.cxx
+    LABEL short
+    LIBRARIES
+      ROOTTMVASofie
+    INCLUDE_DIRS
+      ${CMAKE_CURRENT_BINARY_DIR}
+    COMPILE_OPTIONS
+    -fsycl -DMKL_ILP64  -I${MKLROOT}/include -O3 
+    LINK_OPTIONS
+      -fsycl  -L${MKLROOT}/lib/intel64 -lmkl_sycl -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lsycl -lpthread -lm -ldl -O3
+    )
+  else()
+    find_package(PORTBLAS REQUIRED)
+    if (ROOT_TARGET_GPU_NVIDIA_FOUND)
+      RB_ADD_GBENCHMARK(SOFIEGPUInference
+      SOFIEGPUInference.cxx
+      LABEL short
+      LIBRARIES
+        ROOTTMVASofie
+      INCLUDE_DIRS
+        ${CMAKE_CURRENT_BINARY_DIR}
+      COMPILE_OPTIONS
+      -fsycl -I${PORTBLAS_INCLUDE_DIR} -I${PORTBLAS_SRC_DIR} -fsycl-targets=nvptx64-nvidia-cuda 
+      LINK_OPTIONS
+      -fsycl -fsycl-targets=nvptx64-nvidia-cuda 
+      )
+    elseif(ROOT_TARGET_GPU_AMD_FOUND)
+      RB_ADD_GBENCHMARK(SOFIEGPUInference
+      SOFIEGPUInference.cxx
+      LABEL short
+      LIBRARIES
+        ROOTTMVASofie
+      INCLUDE_DIRS
+        ${CMAKE_CURRENT_BINARY_DIR}
+      COMPILE_OPTIONS
+      -fsycl -I${PORTBLAS_INCLUDE_DIR} -I${PORTBLAS_SRC_DIR} -fsycl-targets=amdgcn-amd-amdhsa
+      LINK_OPTIONS
+      -fsycl -fsycl-targets=amdgcn-amd-amdhsa 
+      )
+    else()
+    RB_ADD_GBENCHMARK(SOFIEGPUInference
+      SOFIEGPUInference.cxx
+      LABEL short
+      LIBRARIES
+        ROOTTMVASofie
+      INCLUDE_DIRS
+        ${CMAKE_CURRENT_BINARY_DIR}
+      COMPILE_OPTIONS
+      -fsycl -I${PORTBLAS_INCLUDE_DIR} -I${PORTBLAS_SRC_DIR} -DMKL_ILP64  -I${MKLROOT}/include -O3 
+      LINK_OPTIONS
+      -fsycl -L${MKLROOT}/lib/intel64 -lmkl_sycl -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lsycl -lpthread -lm -ldl -O3
+      )
+    endif()
+  endif()
+endif()
+add_sycl_to_target(TARGET SOFIEGPUInference SOURCES SOFIEGPUInference.cxx)
+add_dependencies(SOFIEGPUInference SofieCompileGPUModels)
+endif()
+
+if (ROOT_sofie-sycl_FOUND)
+  if (ROOT_GPU_BLAS)
+endif()
 
 RB_ADD_GBENCHMARK(RDF_SOFIE_Inference
     RDF_SOFIE_Inference.cxx
