@@ -141,6 +141,8 @@ add_executable(emitFromONNX_GPU
 
 target_link_libraries(emitFromONNX_GPU ${Protobuf_LIBRARIES} Core ROOTTMVASofie ROOTTMVASofieParser)
 set_target_properties(emitFromONNX_GPU PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+
+
 if (ROOT_sofie-sycl_FOUND)
   if (ROOT_GPU_BLAS_MKLBLAS_FOUND)
   target_compile_definitions(emitFromONNX_GPU PUBLIC GPU_BLAS=0)
@@ -161,9 +163,13 @@ if (ROOT_sofie-sycl_FOUND)
     else()
       target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=0)
       target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=0)
-
+    endif()
   endif()
-endif()
+else()
+  target_compile_definitions(emitFromONNX PUBLIC GPU_BLAS=0)
+  target_compile_definitions(emitFromONNX PUBLIC TARGET_GPU=0)
+  target_compile_definitions(emitFromONNX_GPU PUBLIC GPU_BLAS=0)
+  target_compile_definitions(emitFromONNX_GPU PUBLIC TARGET_GPU=0)
 endif()
 
 endif()
