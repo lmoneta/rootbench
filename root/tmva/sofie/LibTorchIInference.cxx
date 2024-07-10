@@ -21,7 +21,11 @@ bool testOutput = true;
 
 //template <class... Args>
 
-static void BM_Libtorch_Inference(benchmark::State &state, std::string model_path, std::vector<std::vector<int64_t>> shapes) //, vector<vector<int64_t>> shapes)
+vector<vector<int64_t>> shapes = {{1, 10}};
+string model_path = "input_models/model.pt";
+
+//static void BM_Libtorch_Inference(benchmark::State &state, std::string model_path, std::vector<std::vector<int64_t>> shapes) //, vector<vector<int64_t>> shapes)
+static void BM_Libtorch_Inference(benchmark::State &state)
 {
    //cout << "hello" << endl;
    //auto args_tuple = std::make_tuple(std::move(args)...);
@@ -77,11 +81,11 @@ static void BM_Libtorch_Inference(benchmark::State &state, std::string model_pat
    //state.counters["time/evt(ms)"] = 1; // totDuration / double(ntimes * nevts);
 }
 
-vector<vector<int64_t>> shapes = {{1, 10}};
-string model_path = "input_models/model.pt";
+
 
 //, "input_models/model.pt")
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv2DTranspose_Relu_Sigmoid2, model_path, shapes);
+//BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv2DTranspose_Relu_Sigmoid2, model_path, shapes);
+BENCHMARK(BM_Libtorch_Inference);
 //->Unit(benchmark::kMillisecond);
 // BENCHMARK_CAPTURE(BM_ONNXRuntime_Inference, Conv3d_d32_L4_B1, "input_models/Conv3d_d32_L4_B1.onnx")
 //    ->Unit(benchmark::kMillisecond);
