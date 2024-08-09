@@ -244,12 +244,21 @@ if (ONNXRuntime_FOUND)
    target_include_directories(RDF_ONNXRuntime_Inference PRIVATE ${ONNXRuntime_INCLUDE_DIR})
 endif()
 
+
 find_package(Torch REQUIRED)
+
 if (Torch_FOUND)
+
+  add_custom_target(TorchConvertModels)
+  add_custom_command(TARGET TorchConvertModels POST_BUILD
+		COMMAND python3 ${CMAKE_SOURCE_DIR}/root/tmva/sofie/onnx2pytorch.py --dir=${CMAKE_CURRENT_BINARY_DIR}/input_models
+		USES_TERMINAL
+  )
+  #execute_process(COMMAND python3 onnx2pytorch.py --dir=${CMAKE_CURRENT_BINARY_DIR}/input_models)
   message(STATUS "Found Torch (library is  ${TORCH_LIBRARIES}, libraries ${TORCH_LIBRARIES})")
   RB_ADD_GBENCHMARK(Libtorch_inference LibTorchIInference.cxx LABEL short LIBRARIES ${TORCH_LIBRARIES})
   target_include_directories(Libtorch_inference PRIVATE ${TORCH_INCLUDE_DIRS})
-  configure_file(input_models/model.pt ${CMAKE_CURRENT_BINARY_DIR}/input_models/model.pt COPYONLY)
-else()
-  message(STATUS "Torch library is NOT found")
+  add_dependencies(Libtorch_inference TorchConvertModels)
+  #configure_file(input_models/model.pt ${CMAKE_CURRENT_BINARY_DIR}/input_models/model.pt COPYONLY)
 endif()
+
