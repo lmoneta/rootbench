@@ -22,6 +22,10 @@ int main(int argc, char *argv[]){
    RModelParser_ONNX parser;
    std::cout << "Parsing file " << argv[1] << std::endl;
    RModel model = parser.Parse(argv[1]);
+   // add for setting batchsizes to 1
+   std::map<std::string, size_t> m;
+   m["unk__123"] = 1; // for conv2d_transpose model
+   model.Initialize(m, false);
    model.Generate(Options::kDefault, 1);
    model.PrintRequiredInputTensors();
    model.OutputGenerated(outname);
