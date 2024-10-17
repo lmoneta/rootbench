@@ -38,6 +38,7 @@ static void BM_Libtorch_Inference(benchmark::State &state, std::string model_pat
       // cout << endl;
    }
 
+
    size_t nevts = 64;
    size_t bsize = shapes[0][0];
    size_t nrep = nevts / bsize;
@@ -87,40 +88,61 @@ static void BM_Libtorch_Inference(benchmark::State &state, std::string model_pat
 // BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv2DTranspose_Relu_Sigmoid2, "input_models/model.pt", {{64, 10}})
 //    ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, higgs_model_dense, "input_models/higgs_model_dense.pt", {{1, 7}})
+// conv models
+
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv2d_d100_L14_B1, "input_models/Conv2d_d100_L14_B1.pt", {{1, 1, 100, 100}})
+   ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv2d_d100_L14_B32, "input_models/Conv2d_d100_L14_B32.pt", {{32, 1, 100, 100}})
+   ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv2d_d100_L1_B1, "input_models/Conv2d_d100_L1_B1.pt", {{1, 1, 100, 100}})
+   ->Unit(benchmark::kMillisecond);
+
+
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv3d_d32_L4_B1, "input_models/Conv3d_d32_L4_B1.pt", {{1, 1, 32, 32, 32}})
+   ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, ConvTrans2d_Model_B1, "input_models/ConvTrans2d_Model_B1.pt", {{1, 1, 4, 4}})
    ->Unit(benchmark::kMillisecond);
 
 BENCHMARK_CAPTURE(BM_Libtorch_Inference, Generator_B1, "input_models/Generator_B1.pt", {{1, 14}})
    ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_event, "input_models/Linear_event.pt", {{1, 100}})
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Generator_B64, "input_models/Generator_B64.pt", {{64, 14}})
    ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, ConvTrans2dModel_B1, "input_models/ConvTrans2dModel_B1.pt", {{1, 1, 4, 4}})
+
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_16, "input_models/Linear_16.pt", {{16, 100}})
    ->Unit(benchmark::kMillisecond);
 
 BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_32, "input_models/Linear_32.pt", {{32, 100}})
    ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_16, "input_models/Linear_16.pt", {{16, 100}})
-   ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Generator_B64, "input_models/Generator_B64.pt", {{64, 14}})
-   ->Unit(benchmark::kMillisecond);
 
 BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_64, "input_models/Linear_64.pt", {{64, 100}})
    ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv_d100_L14_B1, "input_models/Conv_d100_L14_B1.pt", {{1, 1, 100, 100}})
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_1000, "input_models/Linear_model_100_1000_B1.pt", {{1, 100}})
    ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv3d_d32_L4_B1, "input_models/Conv3d_d32_L4_B1.pt", {{1, 1, 32, 32, 32}})
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_10000, "input_models/Linear_model_100_10000_B1.pt", {{1, 100}})
    ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv_d100_L1_B1, "input_models/Conv_d100_L1_B1.pt", {{1, 1, 100, 100}})
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_100000, "input_models/Linear_model_100_100000_B1.pt", {{1, 100}})
    ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Conv_d100_L14_B32, "input_models/Conv_d100_L14_B32.pt", {{32, 1, 100, 100}})
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_1000_100000, "input_models/Linear_model_1000_100000_B1.pt", {{1, 1000}})
    ->Unit(benchmark::kMillisecond);
+
+
+
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_event, "input_models/Linear_event.pt", {{1, 100}})
+   ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, higgs_model_dense, "input_models/higgs_model_dense.pt", {{1, 7}})
+   ->Unit(benchmark::kMillisecond);
+
+
 
 BENCHMARK_MAIN();
