@@ -15,7 +15,9 @@
 
 using namespace std;
 
-bool testOutput = true;
+bool testOutput = false;
+
+std::vector<float> results;
 
 static void @FUNC_NAME@(benchmark::State& state, string model_path)
 {
@@ -137,6 +139,7 @@ static void @FUNC_NAME@(benchmark::State& state, string model_path)
             auto output_tensors = session.Run(Ort::RunOptions{nullptr}, input_node_names.data(), input_tensors.data(), nin,
                                               output_node_names.data(), nout);
             floatarr = output_tensors.front().GetTensorMutableData<float>();
+            yOut[0] = *floatarr;
             for (int k = 0; k < nin; k++) {
                input_offset[k] += inputSizes[k];
             }
@@ -192,6 +195,7 @@ int main(int argc, char **argv) {
 
    ::benchmark::Initialize(&argc, argv);
    ::benchmark::RunSpecifiedBenchmarks();
+
 
    return 0;
 }
