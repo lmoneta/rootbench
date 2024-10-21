@@ -20,10 +20,16 @@
 #include "Generator_B64.hxx"
 //#include "Generator_B64.modified.hxx"
 
+#include "Linear_model_100_100_B1.hxx"
 #include "Linear_model_100_1000_B1.hxx"
 #include "Linear_model_100_10000_B1.hxx"
 #include "Linear_model_100_100000_B1.hxx"
-//#include "Linear_model_1000_100000_B1.hxx"
+#include "Linear_model_1000_100000_B1.hxx"
+
+#include "Linear_model_100_1000_B16.hxx"
+#include "Linear_model_100_1000_B64.hxx"
+#include "Linear_model_100_1000_B256.hxx"
+#include "Linear_model_100_1000_B1024.hxx"
 
 #include "ConvTrans2d_Relu_Sigmoid.hxx"
 #include "ConvTrans2d_Model_B1.hxx"
@@ -44,6 +50,7 @@
 #include "resnet18v1.hxx"
 #include "TMath.h"
 
+#include <check_mem.h>
 
 using namespace std;
 bool verbose = false;
@@ -53,9 +60,12 @@ bool testOutput = false;
 template <class S>
 void BM_SOFIE_Inference(benchmark::State &state)
 {
+    double mem0 = check_mem();
+    double mem1 = 0;
+
    size_t inputSize = state.range(0);  // input size (without batch size)
    size_t bsize = (state.range(1) > 0) ? state.range(1) : 1;
-   size_t nevts = 64;
+   size_t nevts = (bsize == 1) ? 100 : 4*bsize;
    size_t nrep = nevts / bsize;
 
    vector<float> input(inputSize*nevts);
@@ -70,13 +80,20 @@ void BM_SOFIE_Inference(benchmark::State &state)
    }
    float *input_ptr = input.data();
    // construct session (no need to pass filename, use default value)
+
+   auto t00 = std::chrono::high_resolution_clock::now();
    S s;
+   auto t01 = std::chrono::high_resolution_clock::now();
+   auto initDuration = std::chrono::duration_cast<std::chrono::microseconds>(t01 - t00).count();
+   state.counters["init time(ms)"] = initDuration/1.E6;
 
    double totDuration = 0;
    int ntimes = 0;
    std::vector<float> yOut;
    bool first = true;
    bool doWrite = testOutput;
+   mem0 = std::min(mem0, check_mem());
+
    for (auto _ : state) {
       auto t1 = std::chrono::high_resolution_clock::now();
       for (int i = 0; i < nevts; i += bsize) {
@@ -107,9 +124,12 @@ void BM_SOFIE_Inference(benchmark::State &state)
          doWrite = false;
       }
       //std::cout << ntimes << " duration " << duration/1.E3 << std::endl;
+      mem1 = std::max(check_mem(),mem1);
+
    }
 
    state.counters["time/evt(ms)"] = totDuration / double(ntimes * nevts);
+   state.counters["memory"]=mem1-mem0;
    // input[0] = -999;
    // s.inf
    // std::cout << "number of times " << s.itime << std::endl;
@@ -207,10 +227,26 @@ BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_32::Session)->Name("Lin
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_64::Session)->Name("Linear_64")->Args({100, 64})->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_event::Session)->Name("Linear_event")->Args({100, 1})->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_1000_B1::Session)->Name("Linear_100_1000")->Args({100, 1})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_10000_B1::Session)->Name("Linear_100_10000")->Args({100, 1})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_100000_B1::Session)->Name("Linear_100_100000")->Args({100, 1})->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_1000_100000_B1::Session)->Name("Linear_1000_100000")->Args({1000, 1})->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_100_B1::Session)->Name("Linear_100_100_B1")->Args({100, 1})->Unit(benchmark::kMillisecon\
+d);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_1000_B1::Session)->Name("Linear_100_1000_B1")->Args({100, 1})->Unit(benchmark::kMillisec\
+ond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_10000_B1::Session)->Name("Linear_100_10000_B1")->Args({100, 1})->Unit(benchmark::kMillis\
+econd);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_100000_B1::Session)->Name("Linear_100_100000_B1")->Args({100, 1})->Unit(benchmark::kMill\
+isecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_1000_100000_B1::Session)->Name("Linear_1000_100000_B1")->Args({1000, 1})->Unit(benchmark::kM\
+illisecond);
+
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_1000_B16::Session)->Name("Linear_100_1000_B16")->Args({100, 16})->Unit(benchmark::kMilli\
+second);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_1000_B64::Session)->Name("Linear_100_1000_B64")->Args({100, 64})->Unit(benchmark::kMilli\
+second);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_1000_B256::Session)->Name("Linear_100_1000_B256")->Args({100, 256})->Unit(benchmark::kMi\
+llisecond);
+BENCHMARK_TEMPLATE(BM_SOFIE_Inference, TMVA_SOFIE_Linear_model_100_1000_B1024::Session)->Name("Linear_100_1000_B1024")->Args({100, 1024})->Unit(benchmark::\
+kMillisecond);
+
 
 
 //Recurrent benchmark

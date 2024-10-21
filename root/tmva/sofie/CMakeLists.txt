@@ -41,7 +41,7 @@
     RB_ADD_GBENCHMARK(ONNXRuntimeInference
       ONNXRuntimeInference.cxx
       LABEL short
-      LIBRARIES TMVA ${ONNXRuntime_LIBRARIES}
+      LIBRARIES Core Cling TMVA ${ONNXRuntime_LIBRARIES}
     )
     target_link_directories(ONNXRuntimeInference PRIVATE ${ONNXRuntime_LIBRARIES})
     target_include_directories(ONNXRuntimeInference PRIVATE ${ONNXRuntime_INCLUDE_DIR})
@@ -171,7 +171,7 @@ set(SOFIE_BLAS_LIBS ${BLAS_LIBRARIES})
 RB_ADD_GBENCHMARK(SOFIEInference
     SOFIEInference.cxx
     LABEL short
-    LIBRARIES TMVA  ROOTTMVASofie ${SOFIE_BLAS_LIBS}
+    LIBRARIES Core Cling TMVA  ROOTTMVASofie ${SOFIE_BLAS_LIBS}
 )
 
 add_dependencies(SOFIEInference SofieCompileModels)
@@ -208,6 +208,9 @@ endif()
 
 endif()  # endif blas
 endif()  # endif TMVA/SOFIE
+
+configure_file(check_mem.h check_mem.h COPYONLY)
+
 
 find_package(LWTNN QUIET)
 if (LWTNN_FOUND)
@@ -256,8 +259,8 @@ if (Torch_FOUND)
   )
   #execute_process(COMMAND python3 onnx2pytorch.py --dir=${CMAKE_CURRENT_BINARY_DIR}/input_models)
   message(STATUS "Found Torch (library is  ${TORCH_LIBRARIES}, libraries ${TORCH_LIBRARIES})")
-  RB_ADD_GBENCHMARK(Libtorch_inference LibTorchIInference.cxx LABEL short LIBRARIES ${TORCH_LIBRARIES})
-  target_include_directories(Libtorch_inference PRIVATE ${TORCH_INCLUDE_DIRS})
+  RB_ADD_GBENCHMARK(Libtorch_inference LibTorchIInference.cxx LABEL short LIBRARIES ${TORCH_LIBRARIES} Core Cling RIO)
+  target_include_directories(Libtorch_inference PRIVATE ${TORCH_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
   add_dependencies(Libtorch_inference TorchConvertModels)
   #configure_file(input_models/model.pt ${CMAKE_CURRENT_BINARY_DIR}/input_models/model.pt COPYONLY)
 endif()

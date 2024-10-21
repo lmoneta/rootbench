@@ -11,7 +11,11 @@
 #include <fstream>
 #include <filesystem>
 
+
 #include <torch/script.h> // One-stop header.
+
+#include <check_mem.h>
+
 
 using namespace std;
 
@@ -26,6 +30,8 @@ static void BM_Libtorch_Inference(benchmark::State &state, std::string model_pat
                                   std::vector<std::vector<int64_t>> shapes) //, vector<vector<int64_t>> shapes)
 {
 
+  double mem0 = check_mem();
+  double mem1 = 0;
 
    // fix negative shapes
    for (int i = 0; i < shapes.size(); i++) {
@@ -39,13 +45,19 @@ static void BM_Libtorch_Inference(benchmark::State &state, std::string model_pat
    }
 
 
-   size_t nevts = 64;
+   //size_t nevts = 64;
    size_t bsize = shapes[0][0];
+   size_t nevts = (bsize == 1) ? 100 : 4*bsize;
    size_t nrep = nevts / bsize;
    //std::cout << "using batch size " << bsize << std::endl;
 
+   auto t00 = std::chrono::high_resolution_clock::now();
    torch::jit::script::Module module;
    module = torch::jit::load(model_path);
+   auto t01 = std::chrono::high_resolution_clock::now();
+   auto initDuration = std::chrono::duration_cast<std::chrono::microseconds>(t01 - t00).count();
+   state.counters["init time(ms)"] = initDuration/1.E6;
+
 
    std::vector<std::vector<torch::jit::IValue>> allInputs(nrep);
    for ( auto & inputs : allInputs) {
@@ -54,6 +66,7 @@ static void BM_Libtorch_Inference(benchmark::State &state, std::string model_pat
          inputs.push_back(torch::rand(shapes[i]));
       }
    }
+   mem0 = std::min(mem0, check_mem());
 
    //at::Tensor output = module.forward(inputs).toTensor();
 
@@ -75,10 +88,14 @@ static void BM_Libtorch_Inference(benchmark::State &state, std::string model_pat
 
       totDuration += duration / 1.E3; // in milliseconds
       ntimes++;
+      mem1 = std::max(check_mem(),mem1);
+
    }
+
 
    //std::cout << "ntimes is " << ntimes << std::endl;
    state.counters["time/evt(ms)"] = totDuration / double(ntimes * nevts);
+   state.counters["memory"] = mem1-mem0;
 }
 
 //vector<vector<int64_t>> shapes = {{10}};
@@ -123,17 +140,21 @@ BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_32, "input_models/Linear_32.pt",
 BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_64, "input_models/Linear_64.pt", {{64, 100}})
    ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_1000, "input_models/Linear_model_100_1000_B1.pt", {{1, 100}})
-   ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_100_B1, "input_models/Linear_model_100_100_B1.pt", {{1, 100}})->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_10000, "input_models/Linear_model_100_10000_B1.pt", {{1, 100}})
-   ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_1000_B1, "input_models/Linear_model_100_1000_B1.pt", {{1, 100}})->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_100000, "input_models/Linear_model_100_100000_B1.pt", {{1, 100}})
-   ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_10000_B1, "input_models/Linear_model_100_10000_B1.pt", {{1, 100}})->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_1000_100000, "input_models/Linear_model_1000_100000_B1.pt", {{1, 1000}})
-   ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_100000_B1, "input_models/Linear_model_100_100000_B1.pt", {{1, 100}})->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_1000_100000_B1, "input_models/Linear_model_1000_100000_B1.pt", {{1, 1000}})->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_1000_B16, "input_models/Linear_model_100_1000_B16.pt", {{16, 100}})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_1000_B64, "input_models/Linear_model_100_1000_B64.pt", {{64, 100}})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_1000_B256, "input_models/Linear_model_100_1000_B256.pt", {{256, 100}})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Libtorch_Inference, Linear_100_1000_B1024, "input_models/Linear_model_100_1000_B1024.pt", {{1024, 100}})->Unit(benchmark::kMillisecond);
+
 
 
 

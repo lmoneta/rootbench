@@ -13,6 +13,8 @@
 #include <fstream>
 #include <filesystem>
 
+#include <check_mem.h>
+
 using namespace std;
 
 bool testOutput = false;
@@ -21,6 +23,11 @@ std::vector<float> results;
 
 static void @FUNC_NAME@(benchmark::State& state, string model_path)
 {
+
+   double mem0 = check_mem();
+   double mem1 = 0;
+
+   auto t00 = std::chrono::high_resolution_clock::now();
    Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "benchmark");
 
    Ort::SessionOptions session_options;
@@ -30,6 +37,9 @@ static void @FUNC_NAME@(benchmark::State& state, string model_path)
 
    //std::cout << "benchmarking model " << model_path << std::endl;
    Ort::Session session(env, model_path.c_str(), session_options);
+   auto t01 = std::chrono::high_resolution_clock::now();
+   auto initDuration = std::chrono::duration_cast<std::chrono::microseconds>(t01 - t00).count();
+   state.counters["init time(ms)"] = initDuration/1.E6;
 
    int nin = session.GetInputCount();
    int nout = 1;
@@ -80,9 +90,9 @@ static void @FUNC_NAME@(benchmark::State& state, string model_path)
 
 
    // Calculating the dimension of the input tensor
-   int nevts = 64;
    int bsize = input_node_dims[0][0]; // assume this
    //std::cout << "Using bsize = " << bsize << std::endl;
+   int nevts = (bsize == 1) ? 100 : 4*bsize;
    int nbatches = nevts / bsize;
 
    std::vector<std::vector<float>> inputData(nin);
@@ -124,6 +134,8 @@ static void @FUNC_NAME@(benchmark::State& state, string model_path)
 
       double totDuration = 0;
       int ntimes = 0;
+      mem0 = std::min(mem0, check_mem());
+
       for (auto _ : state) {
          auto t1 = std::chrono::high_resolution_clock::now();
          std::vector<size_t> input_offset(nin);
@@ -145,6 +157,8 @@ static void @FUNC_NAME@(benchmark::State& state, string model_path)
             }
             if (testOutput && i == 0)
                std::copy(floatarr, floatarr + osize, yOut.begin());
+
+            mem1 = std::max(check_mem(),mem1);
          }
 
          auto t2 = std::chrono::high_resolution_clock::now();
@@ -168,6 +182,7 @@ static void @FUNC_NAME@(benchmark::State& state, string model_path)
    //for (int i = 0; i < 10; i++)
    //  printf("%f\t", i, floatarr[i]);
    state.counters["time/evt(ms)"] = totDuration / double(ntimes * nevts);
+   state.counters["memory"]=mem1-mem0;
 
 }
 @BENCHMARK_CAPTURES@
