@@ -13,13 +13,17 @@
 
 
 #include <torch/script.h> // One-stop header.
-
+#include "ATen/Parallel.h"
 #include <check_mem.h>
 
 
 using namespace std;
 
 bool testOutput = true;
+
+bool firstPass = true;
+double memoryUsed = -1;
+
 
 // benchmark::State& state, ) {
 //   auto args_tuple = std::make_tuple(std::move(args)...);
@@ -56,8 +60,11 @@ static void BM_Libtorch_Inference(benchmark::State &state, std::string model_pat
    module = torch::jit::load(model_path);
    auto t01 = std::chrono::high_resolution_clock::now();
    auto initDuration = std::chrono::duration_cast<std::chrono::microseconds>(t01 - t00).count();
+
    state.counters["init time(ms)"] = initDuration/1.E6;
 
+
+   at::set_num_threads(1);
 
    std::vector<std::vector<torch::jit::IValue>> allInputs(nrep);
    for ( auto & inputs : allInputs) {
@@ -88,14 +95,18 @@ static void BM_Libtorch_Inference(benchmark::State &state, std::string model_pat
 
       totDuration += duration / 1.E3; // in milliseconds
       ntimes++;
-      mem1 = std::max(check_mem(),mem1);
+      mem1 = (firstPass) ? std::max(check_mem(),mem1) : 0;
 
    }
 
 
    //std::cout << "ntimes is " << ntimes << std::endl;
    state.counters["time/evt(ms)"] = totDuration / double(ntimes * nevts);
-   state.counters["memory"] = mem1-mem0;
+
+   if (firstPass) memoryUsed = mem1-mem0;
+   state.counters["memory"] = memoryUsed;
+   firstPass = false;
+
 }
 
 //vector<vector<int64_t>> shapes = {{10}};

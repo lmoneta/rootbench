@@ -56,11 +56,14 @@ using namespace std;
 bool verbose = false;
 bool testOutput = false;
 
+bool firstPass = true;
+double memoryUsed = -1;
+
 
 template <class S>
 void BM_SOFIE_Inference(benchmark::State &state)
 {
-    double mem0 = check_mem();
+   double mem0 = (firstPass) ? check_mem() : 0;;
     double mem1 = 0;
 
    size_t inputSize = state.range(0);  // input size (without batch size)
@@ -124,12 +127,14 @@ void BM_SOFIE_Inference(benchmark::State &state)
          doWrite = false;
       }
       //std::cout << ntimes << " duration " << duration/1.E3 << std::endl;
-      mem1 = std::max(check_mem(),mem1);
+      mem1 = (firstPass) ? std::max(check_mem(),mem1) : 0;;
 
    }
 
    state.counters["time/evt(ms)"] = totDuration / double(ntimes * nevts);
-   state.counters["memory"]=mem1-mem0;
+   if (firstPass) memoryUsed = mem1-mem0;
+   state.counters["memory"]=memoryUsed;
+   firstPass = false;
    // input[0] = -999;
    // s.inf
    // std::cout << "number of times " << s.itime << std::endl;

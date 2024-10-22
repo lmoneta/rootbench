@@ -18,13 +18,15 @@
 using namespace std;
 
 bool testOutput = false;
+bool firstPass = true;
+double memoryUsed = -1;
 
 std::vector<float> results;
 
 static void @FUNC_NAME@(benchmark::State& state, string model_path)
 {
 
-   double mem0 = check_mem();
+   double mem0 = (firstPass) ? check_mem() : -1;
    double mem1 = 0;
 
    auto t00 = std::chrono::high_resolution_clock::now();
@@ -134,6 +136,7 @@ static void @FUNC_NAME@(benchmark::State& state, string model_path)
 
       double totDuration = 0;
       int ntimes = 0;
+      
       mem0 = std::min(mem0, check_mem());
 
       for (auto _ : state) {
@@ -158,8 +161,10 @@ static void @FUNC_NAME@(benchmark::State& state, string model_path)
             if (testOutput && i == 0)
                std::copy(floatarr, floatarr + osize, yOut.begin());
 
-            mem1 = std::max(check_mem(),mem1);
+            mem1 = (firstPass) ? std::max(check_mem(),mem1) : 0;
          }
+
+         //check_mem("after loop",1);
 
          auto t2 = std::chrono::high_resolution_clock::now();
          auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
@@ -182,7 +187,9 @@ static void @FUNC_NAME@(benchmark::State& state, string model_path)
    //for (int i = 0; i < 10; i++)
    //  printf("%f\t", i, floatarr[i]);
    state.counters["time/evt(ms)"] = totDuration / double(ntimes * nevts);
-   state.counters["memory"]=mem1-mem0;
+   if (firstPass) memoryUsed = mem1-mem0;
+   state.counters["memory"]=memoryUsed;
+   firstPass = false;
 
 }
 @BENCHMARK_CAPTURES@
